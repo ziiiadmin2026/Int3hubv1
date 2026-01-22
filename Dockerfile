@@ -1,5 +1,12 @@
 # Multi-stage build for Next.js frontend and Node.js backend
-FROM node:18-slim AS base
+FROM node:20-slim AS base
+
+# Install Python and build tools for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # ==========================================
 # Stage 1: Build Frontend (Next.js)
