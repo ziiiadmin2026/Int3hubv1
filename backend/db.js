@@ -4,15 +4,19 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+// Obtener ruta de la base de datos
+const dbPath = process.env.DATABASE_PATH ? 
+  path.resolve(process.env.DATABASE_PATH) : 
+  path.join(__dirname, 'data', 'firewalls.db');
+
 // Crear carpeta de datos si no existe
-const dataDir = path.join(__dirname, 'data');
+const dataDir = path.dirname(dbPath);
 if (!fs.existsSync(dataDir)) {
+  console.log(`[DB] Creando directorio: ${dataDir}`);
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = process.env.DATABASE_PATH ? 
-  path.resolve(process.env.DATABASE_PATH) : 
-  path.join(dataDir, 'firewalls.db');
+console.log(`[DB] Using database at: ${dbPath}`);
   
 const db = new Database(dbPath);
 
