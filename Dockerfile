@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copy frontend package files
 COPY package*.json ./
-RUN npm ci --silent --production=false
+RUN npm install --silent --production=false
 
 # Copy frontend source and build
 COPY pages ./pages
@@ -31,7 +31,7 @@ WORKDIR /app/backend
 
 # Copy backend package files
 COPY backend/package*.json ./
-RUN npm ci --silent --production=true
+RUN npm install --silent --production
 
 # Copy backend source
 COPY backend/*.js ./
