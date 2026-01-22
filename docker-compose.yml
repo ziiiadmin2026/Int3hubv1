@@ -7,8 +7,6 @@ networks:
 volumes:
   app-data:
     driver: local
-  nginx-certs:
-    driver: local
 
 services:
   # ==========================================
@@ -55,8 +53,8 @@ services:
     volumes:
       # NGINX configuration
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
-      # SSL certificates (crear carpeta y agregar certificados)
-      - nginx-certs:/etc/ssl/private:ro
+      # SSL certificates - montar desde carpeta local
+      - ./certs:/etc/ssl/private:ro
       # Logs
       - ./docker/nginx/logs:/var/log/nginx
     depends_on:
