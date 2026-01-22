@@ -78,17 +78,14 @@ COPY --chown=appuser:appuser <<EOF /app/start.sh
 #!/bin/sh
 set -e
 
-# Export backend environment variables
-export PORT=4000
-
 # Start backend in background
 cd /app/backend
-node ws-server.js &
+PORT=${BACKEND_PORT:-4000} node ws-server.js &
 BACKEND_PID=\$!
 
 # Start frontend
 cd /app
-npm run start &
+PORT=${PORT:-3000} npm run start &
 FRONTEND_PID=\$!
 
 # Wait for both processes
