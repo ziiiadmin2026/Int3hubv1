@@ -21,8 +21,6 @@ services:
       - .env.production
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - BACKEND_PORT=4000
     volumes:
       # Persistent data for SQLite database
       - app-data:/app/backend/data
