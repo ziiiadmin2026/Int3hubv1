@@ -78,6 +78,9 @@ COPY --chown=appuser:appuser <<EOF /app/start.sh
 #!/bin/sh
 set -e
 
+# Export backend environment variables
+export PORT=4000
+
 # Start backend in background
 cd /app/backend
 node ws-server.js &
