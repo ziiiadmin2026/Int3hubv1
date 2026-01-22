@@ -46,9 +46,11 @@ services:
     ports:
       - "80:80"      # HTTP
       - "443:443"    # HTTPS
+    env_file:
+      - .env.production
     volumes:
-      # NGINX configuration
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      # NGINX template configuration (envsubst)
+      - ./docker/nginx/templates:/etc/nginx/templates:ro
       # SSL certificates - montar desde carpeta local
       - ./certs:/etc/ssl/private:ro
       # Logs
