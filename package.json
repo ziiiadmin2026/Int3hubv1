@@ -1,0 +1,26 @@
+{
+  "name": "pfsense-firewall-hub",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "backend-dev": "npm --prefix ./backend run dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "lucide-react": "^0.292.0",
+    "next": "14.2.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "recharts": "^3.7.0",
+    "socket.io-client": "^4.8.3",
+    "tailwind-scrollbar": "^3.1.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "concurrently": "^9.2.1",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.3"
+  }
+}
