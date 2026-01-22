@@ -79,14 +79,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo/Brand */}
           <div className="mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 mb-4">
-              <Shield className="w-8 h-8 text-emerald-400" />
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 mb-4">
+              <img src="https://integrational3.com.mx/logorigen/i3logo25x25.png" alt="Integrational Logo" className="w-16 h-16 object-contain" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              pfSense Hub
+            <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-500 mb-2 tracking-tight" style={{fontFamily: '"JetBrains Mono", "Fira Code", "Courier New", monospace', textShadow: '0 0 30px rgba(16, 185, 129, 0.3)'}}>
+              INT3://HUB
             </h1>
-            <p className="text-gray-400 text-sm">
-              Gestión multi-firewall centralizada
+            <p className="text-gray-400 text-xs font-mono uppercase tracking-widest">
+              <span className="text-emerald-500">▸</span> Multi-Firewall Control System
             </p>
           </div>
 
@@ -198,12 +198,17 @@ export default function LoginPage() {
           </div>
 
           {/* Optional advertising space */}
-          <div className="mt-12 p-6 bg-[#121214]/30 border border-gray-800 rounded-xl backdrop-blur-sm">
-            <p className="text-gray-400 text-sm mb-2">
-              💼 Espacio publicitario disponible
-            </p>
-            <p className="text-gray-600 text-xs">
-              Contacta para más información sobre soluciones enterprise
+          <div className="mt-12 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-gray-500 text-xs">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-gray-700"></div>
+              <span className="font-mono uppercase tracking-wider">Powered by</span>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-gray-700"></div>
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              <img src="https://integrational3.com.mx/logorigen/integrational_std.png" alt="Integrational" className="h-8 w-auto opacity-70" />
+            </div>
+            <p className="text-gray-600 text-xs text-center max-w-xs mx-auto">
+              Soluciones tecnológicas empresariales para infraestructura crítica
             </p>
           </div>
         </div>

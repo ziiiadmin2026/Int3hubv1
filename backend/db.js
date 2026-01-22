@@ -308,6 +308,53 @@ function createUser(id, username, passwordHash, email = null, role = 'user') {
   return getUserById(id);
 }
 
+function getAllUsers() {
+  const stmt = db.prepare('SELECT id, username, email, role, createdAt, updatedAt FROM users ORDER BY createdAt DESC');
+  return stmt.all();
+}
+
+function updateUser(id, updates) {
+  const { username, email, role } = updates;
+  const now = Date.now();
+  
+  const fields = [];
+  const values = [];
+  
+  if (username !== undefined) {
+    fields.push('username = ?');
+    values.push(username);
+  }
+  if (email !== undefined) {
+    fields.push('email = ?');
+    values.push(email);
+  }
+  if (role !== undefined) {
+    fields.push('role = ?');
+    values.push(role);
+  }
+  
+  fields.push('updatedAt = ?');
+  values.push(now);
+  values.push(id);
+  
+  const stmt = db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`);
+  stmt.run(...values);
+  return getUserById(id);
+}
+
+function updateUserPassword(id, newPasswordHash) {
+  const now = Date.now();
+  const stmt = db.prepare('UPDATE users SET passwordHash = ?, updatedAt = ? WHERE id = ?');
+  stmt.run(newPasswordHash, now, id);
+  return getUserById(id);
+}
+
+function deleteUser(id) {
+  const stmt = db.prepare('DELETE FROM users WHERE id = ?');
+  const result = stmt.run(id);
+  return result.changes > 0;
+}
+
 // Inicializar al cargar el módulo
 initDatabase();
 
@@ -327,5 +374,9 @@ module.exports = {
   closeDatabase,
   getUserByUsername,
   getUserById,
-  createUser
+  createUser,
+  getAllUsers,
+  updateUser,
+  updateUserPassword,
+  deleteUser
 };

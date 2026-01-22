@@ -483,14 +483,14 @@ const Dashboard = ({
         />
       ) : (
         <div className="bg-[#121214] border border-gray-800 rounded p-6 mt-6">
-          <h2 className="text-lg font-semibold text-gray-200 mb-4 flex items-center gap-2">
-            <Activity size={20} className="text-gray-500" />
-            Estado General del Firewall
+          <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-4 flex items-center gap-2" style={{fontFamily: '"JetBrains Mono", monospace'}}>
+            <Activity size={20} className="text-emerald-500" />
+            <span className="text-gray-500 font-mono">[</span>SYSTEM_STATUS<span className="text-gray-500 font-mono">]</span>
           </h2>
-          <div className="text-gray-400 text-sm">
+          <div className="text-gray-400 text-sm font-mono">
             {firewalls.length === 0
-              ? 'Agrega un firewall para comenzar.'
-              : 'Selecciona un firewall para ver detalles verificados por SSH.'}
+              ? '▸ No active nodes detected. Initialize connection.'
+              : '▸ Select target node for SSH verification protocol.'}
           </div>
         </div>
       )}

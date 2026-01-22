@@ -17,9 +17,9 @@ const Sidebar = ({ firewalls = [], onAddFirewall, onSelectFirewall, onDeleteFire
   return (
     <aside className="w-64 flex-shrink-0 bg-[#0c0c0e] border-r border-gray-800 flex flex-col z-20">
       <div className="h-16 flex items-center px-6 border-b border-gray-800 bg-[#0f0f12]">
-        <div className="flex items-center gap-2">
-          <img src="https://integrational3.com.mx/logorigen/i3logo25x25.png" alt="Integrational Logo" className="w-7 h-7 object-contain" />
-          <span className="font-bold text-gray-100 tracking-wider whitespace-nowrap text-base">INT3 Hub</span>
+        <div className="flex items-center gap-3">
+          <img src="https://integrational3.com.mx/logorigen/i3logo25x25.png" alt="Integrational Logo" className="w-11 h-11 object-contain" />
+          <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight whitespace-nowrap text-xl" style={{fontFamily: '"JetBrains Mono", monospace'}}>INT3://</span>
         </div>
       </div>
       <div className="flex-1 py-6 space-y-2 px-3">

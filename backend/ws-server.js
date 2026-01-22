@@ -97,9 +97,116 @@ app.get('/api/auth/me', (req, res) => {
   }
 });
 
-// Aplicar authMiddleware a todas las rutas de firewalls
-const authRoutes = express.Router();
-app.use(auth.authMiddleware);
+// ============================================================================
+// User Management Routes (Protected)
+// ============================================================================
+
+// Get all users
+app.get('/api/users', auth.authMiddleware, (req, res) => {
+  try {
+    // Verificar que el usuario es admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
+    
+    const users = db.getAllUsers();
+    res.json({ users });
+  } catch (err) {
+    console.error('[Users] Error obteniendo usuarios:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create user
+app.post('/api/users', auth.authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
+    
+    const { username, password, email, role } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username y password son requeridos' });
+    }
+    
+    // Verificar que no exista el usuario
+    const existing = db.getUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ error: 'El usuario ya existe' });
+    }
+    
+    const id = Date.now().toString();
+    const passwordHash = await auth.hashPassword(password);
+    
+    const user = db.createUser(id, username, passwordHash, email, role || 'user');
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error('[Users] Error creando usuario:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update user
+app.put('/api/users/:id', auth.authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
+    
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Si se está cambiando el password
+    if (updates.password) {
+      const passwordHash = await auth.hashPassword(updates.password);
+      db.updateUserPassword(id, passwordHash);
+      delete updates.password;
+    }
+    
+    // Actualizar otros campos
+    if (Object.keys(updates).length > 0) {
+      const user = db.updateUser(id, updates);
+      return res.json({ success: true, user });
+    }
+    
+    const user = db.getUserById(id);
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error('[Users] Error actualizando usuario:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete user
+app.delete('/api/users/:id', auth.authMiddleware, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
+    
+    const { id } = req.params;
+    
+    // No permitir eliminar el propio usuario
+    if (id === req.user.userId) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propio usuario' });
+    }
+    
+    const deleted = db.deleteUser(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Users] Error eliminando usuario:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================================
+// Las rutas de firewalls están protegidas más abajo individualmente
+// ============================================================================
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -301,9 +408,10 @@ app.get('/', (req, res) => {
 });
 
 // ===== API ENDPOINTS FOR FIREWALL MANAGEMENT =====
+// TODAS las rutas de firewalls están protegidas con authMiddleware
 
 // GET all firewalls
-app.get('/api/firewalls', (req, res) => {
+app.get('/api/firewalls', auth.authMiddleware, (req, res) => {
   try {
     const firewalls = db.getAllFirewalls();
     res.json(firewalls);
@@ -313,7 +421,7 @@ app.get('/api/firewalls', (req, res) => {
 });
 
 // GET single firewall
-app.get('/api/firewalls/:id', (req, res) => {
+app.get('/api/firewalls/:id', auth.authMiddleware, (req, res) => {
   try {
     const fw = db.getFirewall(req.params.id);
     if (!fw) return res.status(404).json({ error: 'Firewall not found' });
@@ -324,7 +432,7 @@ app.get('/api/firewalls/:id', (req, res) => {
 });
 
 // POST create firewall
-app.post('/api/firewalls', (req, res) => {
+app.post('/api/firewalls', auth.authMiddleware, (req, res) => {
   try {
     const { id, name, host, port, user, password, key } = req.body;
     if (!id || !name || !host || !user) {
@@ -338,7 +446,7 @@ app.post('/api/firewalls', (req, res) => {
 });
 
 // PUT update firewall
-app.put('/api/firewalls/:id', (req, res) => {
+app.put('/api/firewalls/:id', auth.authMiddleware, (req, res) => {
   try {
     const { name, host, port, user, password, key, status, summary, lastSeen } = req.body;
     const fw = db.updateFirewall(req.params.id, { name, host, port, user, password, key, status, summary, lastSeen });
@@ -350,7 +458,7 @@ app.put('/api/firewalls/:id', (req, res) => {
 });
 
 // DELETE firewall
-app.delete('/api/firewalls/:id', (req, res) => {
+app.delete('/api/firewalls/:id', auth.authMiddleware, (req, res) => {
   try {
     db.deleteFirewall(req.params.id);
     res.status(204).send();
@@ -381,7 +489,7 @@ app.get('/api/stats', (req, res) => {
 });
 
 // POST connect and fetch pfSense stats
-app.post('/api/firewalls/:id/connect', async (req, res) => {
+app.post('/api/firewalls/:id/connect', auth.authMiddleware, async (req, res) => {
   try {
     const id = req.params.id;
     const state = getConnectState(id);
@@ -487,7 +595,7 @@ app.post('/api/firewalls/:id/connect', async (req, res) => {
 });
 
 // GET diagnostic info (for debugging SSH issues)
-app.get('/firewalls/:id/diagnostic', async (req, res) => {
+app.get('/firewalls/:id/diagnostic', auth.authMiddleware, async (req, res) => {
   try {
     const fw = db._getFirewallWithCredentials(req.params.id);
     if (!fw) return res.status(404).json({ error: 'Firewall not found' });
@@ -517,8 +625,6 @@ app.get('/firewalls/:id/diagnostic', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-app.use('/api', authRoutes);
 
 // Seed inicial: crear usuario admin si no existe
 async function seedAdminUser() {
