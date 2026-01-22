@@ -51,6 +51,8 @@ services:
     volumes:
       # NGINX template configuration (envsubst)
       - ./docker/nginx/templates:/etc/nginx/templates:ro
+      # Default envs (runs before envsubst)
+      - ./docker/nginx/entrypoint.d/19-default-server-name.envsh:/docker-entrypoint.d/19-default-server-name.envsh:ro
       # SSL certificates - montar desde carpeta local
       - ./certs:/etc/ssl/private:ro
       # Logs

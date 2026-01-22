@@ -1,0 +1,3 @@
+# Sourced by nginx docker-entrypoint (envsh files)
+# Provide a safe default if the user forgets to set it.
+export NGINX_SERVER_NAME="${NGINX_SERVER_NAME:-_}"
