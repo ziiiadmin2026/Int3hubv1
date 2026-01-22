@@ -4,7 +4,12 @@ const { Server } = require('socket.io');
 const http = require('http');
 const { Client } = require('ssh2');
 const cookieParser = require('cookie-parser');
-require('dotenv').config();
+
+// Load environment variables - use .env.production in production
+const path = require('path');
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+require('dotenv').config({ path: path.join(__dirname, envFile) });
+
 const db = require('./db');
 const sshUtils = require('./ssh-utils');
 const auth = require('./auth');
