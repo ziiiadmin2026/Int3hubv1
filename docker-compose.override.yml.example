@@ -1,0 +1,37 @@
+# Docker Compose Override Example
+# ==========================================
+# Copia este archivo a docker-compose.override.yml para personalizaciones locales
+# Este archivo NO se commiteará al repositorio (está en .gitignore)
+
+version: '3.8'
+
+services:
+  app:
+    # Ejemplo: Limitar recursos
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 1G
+
+    # Ejemplo: Agregar variables de entorno adicionales
+    # environment:
+    #   - DEBUG=true
+    #   - LOG_LEVEL=debug
+
+    # Ejemplo: Mapear puerto backend directamente (para debugging)
+    # ports:
+    #   - "4000:4000"
+
+  nginx:
+    # Ejemplo: Mapear puertos personalizados
+    # ports:
+    #   - "8080:80"
+    #   - "8443:443"
+
+    # Ejemplo: Agregar volúmenes adicionales
+    # volumes:
+    #   - ./custom-nginx.conf:/etc/nginx/nginx.conf:ro

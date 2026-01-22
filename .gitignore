@@ -2,33 +2,75 @@
 node_modules/
 .pnp
 .pnp.js
+backend/node_modules/
 
 # Next.js
 .next/
 out/
 build/
+dist/
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+backend/.env
+backend/.env.production
+backend/.env.local
 
 # Database
 backend/data/
 *.db
+*.db-journal
+*.sqlite
+*.sqlite3
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
+# Certificados SSL
+certs/
+*.pem
+*.key
+*.crt
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+docker/nginx/logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# Docker
+docker-compose.override.yml
+
+# Backups
+backup/
+*.backup
+backup-*.tar.gz

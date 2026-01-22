@@ -1,0 +1,72 @@
+version: '3.8'
+
+networks:
+  pfsense-network:
+    driver: bridge
+
+volumes:
+  app-data:
+    driver: local
+  nginx-certs:
+    driver: local
+
+services:
+  # ==========================================
+  # Main Application (Frontend + Backend)
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pfsense-hub-app
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_PORT=4000
+    volumes:
+      # Persistent data for SQLite database
+      - app-data:/app/backend/data
+      # Mount environment file for backend
+      - ./backend/.env.production:/app/backend/.env.production:ro
+    networks:
+      - pfsense-network
+    expose:
+      - "3000"  # Frontend (Next.js)
+      - "4000"  # Backend API + WebSocket
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # NGINX Reverse Proxy
+  # ==========================================
+  nginx:
+    image: nginx:stable-alpine
+    container_name: pfsense-hub-nginx
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    volumes:
+      # NGINX configuration
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      # SSL certificates (crear carpeta y agregar certificados)
+      - nginx-certs:/etc/ssl/private:ro
+      # Logs
+      - ./docker/nginx/logs:/var/log/nginx
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - pfsense-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

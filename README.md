@@ -1,4 +1,4 @@
-# � pfSense Multi-Firewall Admin Dashboard
+# 🔥 pfSense Multi-Firewall Admin Dashboard
 
 Sistema de administración centralizado para múltiples firewalls pfSense con SSH, almacenamiento persistente y encriptación de credenciales.
 
@@ -11,8 +11,29 @@ Sistema de administración centralizado para múltiples firewalls pfSense con SS
 - ⚡ **Interfaz moderna** con Next.js + Tailwind
 - 🔄 **Auto-sincronización** - conecta automáticamente al agregar firewall
 - 📱 **Responsive design** - funciona en desktop y tablet
+- 🐳 **Docker ready** - Deploy con un comando
 
-## 🚀 Inicio Rápido
+---
+
+## 📖 Documentación
+
+### 🚀 Deploy en Producción
+- **[QUICK-DEPLOY.md](QUICK-DEPLOY.md)** - Deploy en 5 minutos ⚡
+- **[PRODUCTION-DEPLOY.md](PRODUCTION-DEPLOY.md)** - Guía completa de producción
+- **[PRE-DEPLOY-CHECKLIST.md](PRE-DEPLOY-CHECKLIST.md)** - Checklist antes de deploy
+
+### 🛠️ Desarrollo
+- **[QUICK_START.md](QUICK_START.md)** - Inicio rápido para desarrollo
+- **[USAR_AHORA.md](USAR_AHORA.md)** - Guía en español
+
+### 📚 Referencia
+- **[SEGURIDAD.md](SEGURIDAD.md)** - Seguridad y mejores prácticas
+- **[PERSISTENCE.md](PERSISTENCE.md)** - Detalles técnicos de persistencia
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Resumen ejecutivo
+
+---
+
+## 🚀 Inicio Rápido - Desarrollo
 
 ### Requisitos
 - Node.js v20+
@@ -122,11 +143,28 @@ SQLite (AES-256 encrypted)
 | ENCRYPTION_KEY error | Asegurar `backend/.env` existe |
 | BD corrupta | `rm backend/data/firewalls.db` y reiniciar |
 
-## 📚 Documentación Adicional
+## � Deploy en Producción
 
-- [SEGURIDAD.md](./SEGURIDAD.md) - Guía de seguridad y deployment
-- [PERSISTENCE.md](./PERSISTENCE.md) - Detalles técnicos de persistencia
-- [USAR_AHORA.md](./USAR_AHORA.md) - Guía en español
+### Deploy Rápido (5 minutos)
+
+Ver **[QUICK-DEPLOY.md](QUICK-DEPLOY.md)** para instrucciones rápidas.
+
+```bash
+# 1. Configurar variables de entorno
+# Editar: .env.production y backend/.env.production
+
+# 2. Agregar certificados SSL en carpeta certs/
+
+# 3. Deploy
+./deploy.sh    # Linux/Mac
+deploy.bat     # Windows
+```
+
+### Documentación Completa de Producción
+
+- **[PRE-DEPLOY-CHECKLIST.md](PRE-DEPLOY-CHECKLIST.md)** - Checklist antes de deploy
+- **[PRODUCTION-DEPLOY.md](PRODUCTION-DEPLOY.md)** - Guía completa paso a paso
+- **[QUICK-DEPLOY.md](QUICK-DEPLOY.md)** - Deploy rápido en 5 minutos
 
 ## 💡 Desarrollo
 
@@ -141,41 +179,30 @@ npm run start         # Producción
 
 **Versión**: 1.0.0 | **Última actualización**: Enero 2026
 
+## 📚 Documentación Completa
+
+### 🚀 Para Empezar
+
 **English:**
-1. **[QUICK_START.md](QUICK_START.md)** ← Read this first!
-2. **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Project overview
+- **[QUICK_START.md](QUICK_START.md)** - Development quick start
+- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Project overview
 
 **Español:**
-1. **[USAR_AHORA.md](USAR_AHORA.md)** ← ¡Lee esto primero!
-   - Persistencia de datos ✅
-   - BD SQLite + Encriptación
-   - Guía de inicio rápido
+- **[USAR_AHORA.md](USAR_AHORA.md)** - Guía de inicio rápido
+- **[SEGURIDAD.md](SEGURIDAD.md)** - Guía de seguridad
 
-2. **[PERSISTENCE.md](PERSISTENCE.md)** - Arquitectura de BD
+### 🏭 Producción
 
----
+- **[QUICK-DEPLOY.md](QUICK-DEPLOY.md)** - Deploy en 5 minutos
+- **[PRODUCTION-DEPLOY.md](PRODUCTION-DEPLOY.md)** - Guía completa de producción
+- **[PRE-DEPLOY-CHECKLIST.md](PRE-DEPLOY-CHECKLIST.md)** - Checklist de deploy
 
-## 📖 Main Documentation
+### 🔧 Técnica
 
-### Understanding the Project
-- **[FIREWALL_ENHANCEMENTS.md](FIREWALL_ENHANCEMENTS.md)**
-  - What features were added
-  - Component changes summary
-  - File-by-file breakdown
-
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)**
-  - Technical implementation details
-  - Action flow diagrams
-  - Code quality metrics
-  - Testing checklist
-
-### Using the Application
-- **[VISUAL_GUIDE.md](VISUAL_GUIDE.md)**
-  - UI layout diagrams
-  - Action button locations
-  - User workflow diagrams
-  - Color legend
-  - Responsive breakpoints
+- **[PERSISTENCE.md](PERSISTENCE.md)** - Arquitectura de persistencia
+- **[FIREWALL_ENHANCEMENTS.md](FIREWALL_ENHANCEMENTS.md)** - Features y cambios
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Detalles de implementación
+- **[VISUAL_GUIDE.md](VISUAL_GUIDE.md)** - Guía visual UI
 
 - **[REFERENCE.md](REFERENCE.md)**
   - Complete API reference
