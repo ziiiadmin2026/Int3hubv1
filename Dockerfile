@@ -26,6 +26,7 @@ COPY public ./public
 COPY next.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
+COPY .env.production ./
 
 # Build Next.js app
 RUN npm run build
