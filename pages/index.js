@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import Dashboard from '../components/Dashboard';
+import AddFirewallModal from '../components/AddFirewallModal';
 
 const Home = () => {
   const router = useRouter();
@@ -13,6 +14,8 @@ const Home = () => {
   const [minLoadTime, setMinLoadTime] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [firewallModalOpen, setFirewallModalOpen] = useState(false);
+  const [editFirewall, setEditFirewall] = useState(null);
 
   // Verificar autenticación
   useEffect(() => {
@@ -87,6 +90,7 @@ const Home = () => {
             user: fw.user,
             password: fw.password,
             key: fw.key,
+            alert_emails: fw.alert_emails,
             status,
             summary: summary || undefined,
             lastSeen: isOnline ? Date.now() : undefined
@@ -114,7 +118,8 @@ const Home = () => {
             port: fw.port,
             user: fw.user,
             password: fw.password,
-            key: fw.key
+            key: fw.key,
+            alert_emails: fw.alert_emails
           })
         });
         if (res.ok) {
@@ -209,9 +214,16 @@ const Home = () => {
     }
   };
 
+  const handleOpenAddFirewall = () => {
+    setEditFirewall(null);
+    setFirewallModalOpen(true);
+  };
+
   const handleEditFirewall = (id) => {
     const fw = firewalls.find(f => f.id === id);
-    return fw;
+    if (!fw) return;
+    setEditFirewall(fw);
+    setFirewallModalOpen(true);
   };
 
   const handleLogout = async () => {
@@ -345,11 +357,11 @@ const Home = () => {
         <>
           <Sidebar 
             firewalls={filteredFirewalls} 
-            onAddFirewall={handleAddFirewall} 
             onSelectFirewall={handleSelectFirewall}
             onDeleteFirewall={handleDeleteFirewall}
             onDisconnectFirewall={handleDisconnectFirewall}
             onEditFirewall={handleEditFirewall}
+            onOpenAddFirewall={handleOpenAddFirewall}
           />
           <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#09090b] relative z-10">
             <Topbar user={user} onLogout={handleLogout} searchTerm={searchTerm} onSearchChange={setSearchTerm} />
@@ -365,6 +377,17 @@ const Home = () => {
               />
             </div>
           </main>
+
+          <AddFirewallModal
+            open={firewallModalOpen}
+            onClose={() => { setFirewallModalOpen(false); setEditFirewall(null); }}
+            onAdd={(fw, id, summary) => {
+              handleAddFirewall(fw, id, summary);
+              setFirewallModalOpen(false);
+              setEditFirewall(null);
+            }}
+            initialData={editFirewall}
+          />
         </>
       )}
     </div>

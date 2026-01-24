@@ -25,17 +25,13 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } else {
         setUser(null);
-        // Redirect to login if not on login page
-        if (router.pathname !== '/login') {
-          router.push('/login');
-        }
+        // Only redirect to login if on a protected page that's not login itself
+        // Let each page handle its own redirect logic
       }
     } catch (err) {
       console.error('[Auth] Error checking auth:', err);
       setUser(null);
-      if (router.pathname !== '/login') {
-        router.push('/login');
-      }
+      // Let each page handle its own redirect logic
     } finally {
       setLoading(false);
     }

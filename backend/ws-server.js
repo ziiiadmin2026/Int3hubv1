@@ -13,6 +13,7 @@ require('dotenv').config({ path: path.join(__dirname, envFile) });
 const db = require('./db');
 const sshUtils = require('./ssh-utils');
 const auth = require('./auth');
+const { startScheduler } = require('./scheduler');
 
 const app = express();
 app.use(cors({ 
@@ -196,9 +197,9 @@ app.delete('/api/users/:id', auth.authMiddleware, (req, res) => {
     if (id === req.user.userId) {
       return res.status(400).json({ error: 'No puedes eliminar tu propio usuario' });
     }
-    
-    const deleted = db.deleteUser(id);
-    if (!deleted) {
+
+    const success = db.deleteUser(id);
+    if (!success) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     
@@ -207,6 +208,25 @@ app.delete('/api/users/:id', auth.authMiddleware, (req, res) => {
     console.error('[Users] Error eliminando usuario:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Settings routes
+app.get('/api/settings', auth.authMiddleware, (req, res) => {
+  const settingsApi = require('./settings');
+  settingsApi.getSettings(req, res);
+});
+
+app.post('/api/settings', auth.authMiddleware, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+  }
+  const settingsApi = require('./settings');
+  settingsApi.saveSettings(req, res);
+});
+
+app.post('/api/settings/test-email', auth.authMiddleware, (req, res) => {
+  const settingsApi = require('./settings');
+  settingsApi.testEmail(req, res);
 });
 
 // ============================================================================
@@ -325,7 +345,19 @@ function parsePfSenseOutput(buf) {
 // WebSocket para logs SSH en tiempo real
 io.on('connection', (socket) => {
   socket.on('ssh-connect', (params) => {
+    console.log('[WS] Recibido ssh-connect con params:', { host: params.host, port: params.port, user: params.user });
     const { host, port, user, password, key, command } = params;
+    
+    if (!host || !user) {
+      console.error('[WS] Faltan parámetros requeridos:', { host, user });
+      socket.emit('ssh-log', '[SSH] Error: Faltan host o usuario');
+      socket.emit('ssh-end', { success: false, error: 'Faltan parámetros' });
+      return;
+    }
+    
+    console.log('[WS] Iniciando conexión SSH a', host + ':' + (port || 22));
+    socket.emit('ssh-log', `[SSH] Conectando a ${host}:${port || 22}...`);
+    
     const conn = new Client();
     let connected = false;
 
@@ -353,7 +385,7 @@ io.on('connection', (socket) => {
           'df -h /',
           'printf "__END__"'
         ];
-        const buffer = '';
+        let buffer = '';
         stream.write(defaultCmds.join('; ') + '\n');
         let summaryEmitted = false;
 
@@ -393,11 +425,15 @@ io.on('connection', (socket) => {
         });
       });
     }).on('error', (err) => {
+      console.error('[WS] Error SSH:', err.message);
       if (!connected) {
         socket.emit('ssh-log', '[SSH] Error de conexión: ' + err.message);
         socket.emit('ssh-end', { success: false, error: err.message });
       }
-    }).connect({
+    });
+    
+    console.log('[WS] Ejecutando conn.connect()...');
+    conn.connect({
       host,
       port: Number(port) || 22,
       username: user,
@@ -439,11 +475,11 @@ app.get('/api/firewalls/:id', auth.authMiddleware, (req, res) => {
 // POST create firewall
 app.post('/api/firewalls', auth.authMiddleware, (req, res) => {
   try {
-    const { id, name, host, port, user, password, key } = req.body;
+    const { id, name, host, port, user, password, key, alert_emails } = req.body;
     if (!id || !name || !host || !user) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const fw = db.addFirewall(id, { name, host, port, user, password, key });
+    const fw = db.addFirewall(id, { name, host, port, user, password, key, alert_emails });
     res.status(201).json(fw);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -453,8 +489,8 @@ app.post('/api/firewalls', auth.authMiddleware, (req, res) => {
 // PUT update firewall
 app.put('/api/firewalls/:id', auth.authMiddleware, (req, res) => {
   try {
-    const { name, host, port, user, password, key, status, summary, lastSeen } = req.body;
-    const fw = db.updateFirewall(req.params.id, { name, host, port, user, password, key, status, summary, lastSeen });
+    const { name, host, port, user, password, key, status, summary, lastSeen, alert_emails } = req.body;
+    const fw = db.updateFirewall(req.params.id, { name, host, port, user, password, key, status, summary, lastSeen, alert_emails });
     if (!fw) return res.status(404).json({ error: 'Firewall not found' });
     res.json(fw);
   } catch (err) {
@@ -663,5 +699,11 @@ const PORT = process.env.PORT || 4000;
 server.listen(PORT, async () => {
   console.log(`Backend SSH WebSocket API running on port ${PORT}`);
   await seedAdminUser();
+  
+  // Iniciar monitoreo continuo si está habilitado
+  if (process.env.CONTINUOUS_MONITORING === 'true') {
+    console.log('[Backend] Starting continuous monitoring...');
+    startScheduler();
+  }
 });
 

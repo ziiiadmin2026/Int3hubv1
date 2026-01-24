@@ -65,6 +65,7 @@ function initDatabase() {
       status TEXT DEFAULT 'offline',
       summary TEXT,
       lastSeen INTEGER,
+      alert_emails TEXT,
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
@@ -84,6 +85,17 @@ function initDatabase() {
       updatedAt INTEGER NOT NULL
     );
   `);
+
+  // Migraciones ligeras (por si la DB ya existía sin columnas nuevas)
+  try {
+    const cols = db.prepare('PRAGMA table_info(firewalls)').all().map(r => r.name);
+    if (!cols.includes('alert_emails')) {
+      db.exec('ALTER TABLE firewalls ADD COLUMN alert_emails TEXT');
+    }
+  } catch (e) {
+    // Si falla por cualquier razón, no rompemos el arranque.
+    console.error('[DB] Migration error:', e.message);
+  }
 }
 
 // Obtener todos los firewalls (SIN credenciales por seguridad)
@@ -98,6 +110,7 @@ function getAllFirewalls() {
     port: fw.port,
     user: fw.user,
     status: fw.status,
+    alert_emails: fw.alert_emails ? JSON.parse(fw.alert_emails) : [],
     summary: fw.summary ? JSON.parse(fw.summary) : null,
     lastSeen: fw.lastSeen,
     createdAt: fw.createdAt,
@@ -119,6 +132,7 @@ function getFirewall(id) {
     port: fw.port,
     user: fw.user,
     status: fw.status,
+    alert_emails: fw.alert_emails ? JSON.parse(fw.alert_emails) : [],
     summary: fw.summary ? JSON.parse(fw.summary) : null,
     lastSeen: fw.lastSeen,
     createdAt: fw.createdAt,
@@ -145,13 +159,14 @@ function _getFirewallWithCredentials(id) {
 function addFirewall(id, data) {
   const now = Date.now();
   const stmt = db.prepare(`
-    INSERT INTO firewalls (id, name, ip, port, user, password, key, status, summary, lastSeen, createdAt, updatedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO firewalls (id, name, ip, port, user, password, key, status, summary, lastSeen, alert_emails, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   
   const encryptedPassword = data.password ? encrypt(data.password) : encrypt('');
   const encryptedKey = data.key ? encrypt(data.key) : null;
   const summary = data.summary ? JSON.stringify(data.summary) : null;
+  const alertEmails = data.alert_emails && data.alert_emails.length > 0 ? JSON.stringify(data.alert_emails) : null;
   
   stmt.run(
     id,
@@ -164,6 +179,7 @@ function addFirewall(id, data) {
     data.status || 'offline',
     summary,
     data.lastSeen || null,
+    alertEmails,
     now,
     now
   );
@@ -178,7 +194,7 @@ function updateFirewall(id, data) {
 
   // Necesitamos conservar credenciales encriptadas si no vienen en el payload.
   // getFirewall() no expone password/key por seguridad.
-  const existingRow = db.prepare('SELECT password, key, summary FROM firewalls WHERE id = ?').get(id);
+  const existingRow = db.prepare('SELECT password, key, summary, alert_emails FROM firewalls WHERE id = ?').get(id);
   
   const now = Date.now();
   const encryptedPassword = (data.password !== undefined)
@@ -190,10 +206,13 @@ function updateFirewall(id, data) {
   const summary = (data.summary !== undefined)
     ? (data.summary ? JSON.stringify(data.summary) : null)
     : existingRow.summary;
+  const alertEmails = (data.alert_emails !== undefined)
+    ? (data.alert_emails && data.alert_emails.length > 0 ? JSON.stringify(data.alert_emails) : null)
+    : existingRow.alert_emails;
   
   const stmt = db.prepare(`
     UPDATE firewalls 
-    SET name = ?, ip = ?, port = ?, user = ?, password = ?, key = ?, status = ?, summary = ?, lastSeen = ?, updatedAt = ?
+    SET name = ?, ip = ?, port = ?, user = ?, password = ?, key = ?, status = ?, summary = ?, lastSeen = ?, alert_emails = ?, updatedAt = ?
     WHERE id = ?
   `);
   
@@ -207,6 +226,7 @@ function updateFirewall(id, data) {
     data.status !== undefined ? data.status : fw.status,
     summary,
     data.lastSeen !== undefined ? data.lastSeen : fw.lastSeen,
+    alertEmails,
     now,
     id
   );
@@ -359,6 +379,95 @@ function deleteUser(id) {
   return result.changes > 0;
 }
 
+// Actualizar estado y métricas de un firewall (para scheduler)
+function updateFirewallStatus(id, status, metrics = {}) {
+  const now = Date.now();
+  const summary = metrics ? JSON.stringify(metrics) : null;
+  
+  const stmt = db.prepare(`
+    UPDATE firewalls 
+    SET status = ?, summary = ?, lastSeen = ?, updatedAt = ?
+    WHERE id = ?
+  `);
+  
+  stmt.run(status, summary, now, now, id);
+}
+
+// Obtener firewalls con credenciales (para scheduler)
+function getFirewalls() {
+  const stmt = db.prepare('SELECT * FROM firewalls');
+  const firewalls = stmt.all();
+  
+  return firewalls.map(fw => {
+    let password = null;
+    let key = null;
+    
+    try {
+      if (fw.password) password = decrypt(fw.password);
+      if (fw.key) key = decrypt(fw.key);
+    } catch (error) {
+      console.error(`[DB] Error decrypting firewall ${fw.id}:`, error.message);
+    }
+    
+    return {
+      id: fw.id,
+      name: fw.name,
+      ip: fw.ip,
+      port: fw.port,
+      user: fw.user,
+      password,
+      key,
+      status: fw.status,
+      summary: fw.summary ? JSON.parse(fw.summary) : null,
+      lastSeen: fw.lastSeen
+    };
+  });
+}
+
+// Obtener configuración del sistema
+function getSettings() {
+  const stmt = db.prepare('SELECT key, value FROM settings');
+  const rows = stmt.all();
+  
+  const settings = {
+    notifications_enabled: false,
+    smtp_host: process.env.SMTP_HOST || '',
+    smtp_port: parseInt(process.env.SMTP_PORT || '587'),
+    smtp_secure: process.env.SMTP_SECURE === 'true',
+    smtp_user: process.env.SMTP_USER || '',
+    smtp_pass: process.env.SMTP_PASS || '',
+    smtp_from: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+    alert_emails: process.env.ALERT_EMAIL ? process.env.ALERT_EMAIL.split(',').map(e => e.trim()) : [],
+    monitor_interval: parseInt(process.env.MONITOR_INTERVAL || '300000')
+  };
+  
+  // Sobrescribir con valores de la DB si existen
+  rows.forEach(row => {
+    try {
+      const value = JSON.parse(row.value);
+      settings[row.key] = value;
+    } catch {
+      settings[row.key] = row.value;
+    }
+  });
+  
+  return settings;
+}
+
+// Guardar configuración del sistema
+function saveSettings(settings) {
+  const keys = Object.keys(settings);
+  
+  keys.forEach(key => {
+    const value = typeof settings[key] === 'object' 
+      ? JSON.stringify(settings[key]) 
+      : String(settings[key]);
+    
+    const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    stmt.run(key, value);
+  });
+}
+
 // Inicializar al cargar el módulo
 initDatabase();
 
@@ -370,11 +479,15 @@ module.exports = {
   _getFirewallWithCredentials,
   getAllFirewalls,
   getFirewall,
+  getFirewalls,
   addFirewall,
   updateFirewall,
+  updateFirewallStatus,
   deleteFirewall,
   updateStatus,
   getStats,
+  getSettings,
+  saveSettings,
   closeDatabase,
   getUserByUsername,
   getUserById,
