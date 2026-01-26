@@ -17,6 +17,7 @@ services:
     container_name: pfsense-hub-app
     env_file:
       - .env.production
+      - ./backend/.env.production
     environment:
       - NODE_ENV=production
     volumes:
