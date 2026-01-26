@@ -54,10 +54,25 @@ async function sendTestAlert() {
   });
   
   console.log('[Test] Enviando email de alerta...');
+
+  const normalizeFromAddress = (settings) => {
+    const rawCandidates = [settings.smtp_from, settings.smtp_user].filter(v => typeof v === 'string');
+    const raw = (rawCandidates.find(v => v.trim().length > 0) || '').trim();
+    if (/[\r\n]/.test(raw)) return null;
+    if (raw.includes('<') && raw.includes('>') && raw.includes('@')) return raw;
+    const looksLikeEmail = /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(raw);
+    if (!looksLikeEmail) return null;
+    return { name: 'Int3 Hub OnLine', address: raw };
+  };
   
   try {
+    const fromValue = normalizeFromAddress(settings);
+    if (!fromValue) {
+      throw new Error('Remitente inválido. Configura smtp_user o smtp_from con un email válido.');
+    }
+
     await transporter.sendMail({
-      from: settings.smtp_from || settings.smtp_user,
+      from: fromValue,
       to: settings.alert_emails.join(', '),
       subject: `${statusIcon} [IntHub] ${subject}`,
       html: `

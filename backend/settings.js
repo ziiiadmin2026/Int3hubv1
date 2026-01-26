@@ -33,6 +33,29 @@ async function saveSettings(req, res) {
 async function testEmail(req, res) {
   const { getSettings } = require('./db');
   const nodemailer = require('nodemailer');
+
+  function normalizeFromAddress(settings) {
+    const rawCandidates = [settings.smtp_from, settings.smtp_user].filter(v => typeof v === 'string');
+    const raw = (rawCandidates.find(v => v.trim().length > 0) || '').trim();
+
+    // Prevent header injection / invalid header folding
+    if (/[\r\n]/.test(raw)) {
+      return null;
+    }
+
+    // If user provided full mailbox (e.g. "Name <email@domain>") keep it if it contains an @
+    if (raw.includes('<') && raw.includes('>') && raw.includes('@')) {
+      return raw;
+    }
+
+    const email = raw;
+    const looksLikeEmail = /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(email);
+    if (!looksLikeEmail) {
+      return null;
+    }
+
+    return { name: 'Int3 Hub OnLine', address: email };
+  }
   
   try {
     const settings = getSettings();
@@ -68,8 +91,13 @@ async function testEmail(req, res) {
       }
     });
     
+    const fromValue = normalizeFromAddress(settings);
+    if (!fromValue) {
+      return res.status(400).json({ error: 'Remitente inválido. Configura un email válido en SMTP User o SMTP From.' });
+    }
+
     await transporter.sendMail({
-      from: settings.smtp_from || settings.smtp_user,
+      from: fromValue,
       to: settings.alert_emails.join(', '),
       subject: '✅ [IntHub Test] Email de Prueba',
       html: `
