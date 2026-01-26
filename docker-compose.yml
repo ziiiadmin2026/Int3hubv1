@@ -25,11 +25,13 @@ services:
       - app-data:/app/backend/data
       # Mount environment file for backend
       - ./backend/.env.production:/app/backend/.env.production:ro
-    networks:
-      - pfsense-network
-    expose:
-      - "3000"  # Frontend (Next.js)
-      - "4000"  # Backend API + WebSocket
+    network_mode: host
+    # Comentado: usar host network para acceder a firewalls en LAN
+    # networks:
+    #   - pfsense-network
+    # expose:
+    #   - "3000"  # Frontend (Next.js)
+    #   - "4000"  # Backend API + WebSocket
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"]
