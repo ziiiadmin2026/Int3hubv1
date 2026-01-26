@@ -153,9 +153,9 @@ const AddFirewallModal = ({ open, onClose, onAdd, initialData }) => {
     });
   };
 
-  const handleAdd = (e) => {
+  const handleAdd = (e, forceAdd = false) => {
     e.preventDefault();
-    if (canAdd) {
+    if (canAdd || forceAdd) {
       const pendingEmail = normalizeEmail(newEmail);
       const baseEmails = Array.isArray(form.alert_emails) ? form.alert_emails : [];
       const normalizedExisting = new Set(baseEmails.map(normalizeEmail));
@@ -297,7 +297,20 @@ const AddFirewallModal = ({ open, onClose, onAdd, initialData }) => {
           </span>
         </button>
         {status === 'error' && (
-          <div className="mt-2 text-xs text-red-400 flex items-center gap-2"><XCircle size={16} /> Error de conexión, revisa los datos e inténtalo de nuevo.</div>
+          <>
+            <div className="mt-2 text-xs text-red-400 flex items-center gap-2"><XCircle size={16} /> Error de conexión, revisa los datos e inténtalo de nuevo.</div>
+            <button
+              className="w-full py-2 mt-2 font-bold rounded transition-colors bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500"
+              onClick={(e) => handleAdd(e, true)}
+            >
+              <span className="flex items-center justify-center gap-2">
+                Guardar de Todas Formas (verificar después)
+              </span>
+            </button>
+            <div className="mt-2 text-xs text-yellow-400/80 bg-yellow-900/20 border border-yellow-800/30 rounded px-3 py-2">
+              💡 El firewall se guardará con estado "offline". Podrás verificar la conexión más tarde desde el dashboard.
+            </div>
+          </>
         )}
       </div>
     </div>
